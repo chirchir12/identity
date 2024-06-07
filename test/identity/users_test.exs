@@ -21,7 +21,13 @@ defmodule Identity.UsersTest do
     end
 
     test "create_user/1 with valid data creates a user" do
-      valid_attrs = %{password_hash: "some password_hash", email: "some email", oid: "some oid", firstname: "some firstname", lastname: "some lastname"}
+      valid_attrs = %{
+        password_hash: "some password_hash",
+        email: "some email",
+        oid: "some oid",
+        firstname: "some firstname",
+        lastname: "some lastname"
+      }
 
       assert {:ok, %User{} = user} = Users.create_user(valid_attrs)
       assert user.password_hash == "some password_hash"
@@ -37,7 +43,14 @@ defmodule Identity.UsersTest do
 
     test "update_user/2 with valid data updates the user" do
       user = user_fixture()
-      update_attrs = %{password_hash: "some updated password_hash", email: "some updated email", oid: "some updated oid", firstname: "some updated firstname", lastname: "some updated lastname"}
+
+      update_attrs = %{
+        password_hash: "some updated password_hash",
+        email: "some updated email",
+        oid: "some updated oid",
+        firstname: "some updated firstname",
+        lastname: "some updated lastname"
+      }
 
       assert {:ok, %User{} = user} = Users.update_user(user, update_attrs)
       assert user.password_hash == "some updated password_hash"

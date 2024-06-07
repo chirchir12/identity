@@ -22,6 +22,11 @@ config :identity, IdentityWeb.Endpoint,
   pubsub_server: Identity.PubSub,
   live_view: [signing_salt: "e1tiGLni"]
 
+# setup guardian
+config :identity, Identity.Guardian,
+  issuer: "identity",
+  secret_key: System.get_env("AUTH_SECRET")
+
 # Configures the mailer
 #
 # By default it uses the "Local" adapter which stores the emails

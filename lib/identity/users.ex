@@ -38,6 +38,28 @@ defmodule Identity.Users do
   def get_user!(id), do: Repo.get!(User, id)
 
   @doc """
+  Gets a single user.
+  Raises `Ecto.NoResultsError` if the User does not exist.
+
+  ## Examples
+    iex> get_user_by!(c223374e-4a46-4cb7-9e4d-0cbaa38e3bed, :uuid)
+        %User{}
+
+    iex> get_user_by!(mail@mail.com, :email)
+        %User{}
+
+    iex> get_user!(456)
+      ** (Ecto.NoResultsError)
+  """
+  def get_user_by!(oid, :uuid) do
+    Repo.get_by!(User, oid: oid)
+  end
+
+  def get_user_by!(email, :email) do
+    Repo.get_by!(User, email: email |> String.downcase())
+  end
+
+  @doc """
   Creates a user.
 
   ## Examples
