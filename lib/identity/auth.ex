@@ -6,8 +6,14 @@ defmodule Identity.Auth do
   def login(email, plain_text_password) do
     with {:ok, user} <- get_user_by_email(email),
          {:ok, true} <- verify_password(plain_text_password, user.password_hash),
-         {:ok, access_token} <- create_access_token(user),
-         {:ok, refresh_token} <- create_refresh_token(user) do
+         {:ok, access_token, refresh_token} <- auth_reply(user) do
+      {:ok, user, access_token, refresh_token}
+    end
+  end
+
+  def register(params) do
+    with {:ok, user} <- Users.create_user(params),
+         {:ok, access_token, refresh_token} <- auth_reply(user) do
       {:ok, user, access_token, refresh_token}
     end
   end
@@ -27,15 +33,23 @@ defmodule Identity.Auth do
   end
 
   defp create_access_token(%User{} = user) do
-    options = :identity |> Application.get_env(Identity.Guardian) |> Keyword.get(:ttl)
-    IO.inspect(options)
-    {:ok, access_token, _claim} = Guardian.encode_and_sign(user, %{}, token_type: :access, ttl: {15, :minutes})
+    {:ok, access_token, _claim} =
+      Guardian.encode_and_sign(user, %{}, token_type: :access, ttl: {15, :minutes})
+
     {:ok, access_token}
   end
 
   defp create_refresh_token(%User{} = user) do
-    {:ok, refresh_token, _claim} = Guardian.encode_and_sign(user,  %{}, token_type: :refresh, ttl: {1, :day})
+    {:ok, refresh_token, _claim} =
+      Guardian.encode_and_sign(user, %{}, token_type: :refresh, ttl: {1, :day})
+
     {:ok, refresh_token}
   end
 
+  defp auth_reply(%User{} = user) do
+    with {:ok, access_token} <- create_access_token(user),
+         {:ok, refresh_token} <- create_refresh_token(user) do
+      {:ok, access_token, refresh_token}
+    end
+  end
 end
