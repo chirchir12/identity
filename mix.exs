@@ -47,6 +47,7 @@ defmodule Identity.MixProject do
       {:bandit, "~> 1.2"},
       {:comeonin, "~> 5.4"},
       {:guardian, "~> 2.3"},
+      {:guardian_db, "~> 2.0"},
       {:argon2_elixir, "~> 4.0"}
     ]
   end

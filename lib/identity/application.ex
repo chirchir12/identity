@@ -17,7 +17,8 @@ defmodule Identity.Application do
       # Start a worker by calling: Identity.Worker.start_link(arg)
       # {Identity.Worker, arg},
       # Start to serve requests, typically the last entry
-      IdentityWeb.Endpoint
+      IdentityWeb.Endpoint,
+      {Guardian.DB.Token.SweeperServer, []}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

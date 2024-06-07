@@ -35,6 +35,17 @@ config :identity, Identity.Guardian,
     ]
   ]
 
+# setup gurdian db
+config :guardian, Guardian.DB,
+  # Add your repository module
+  repo: Identity.Repo,
+  # default
+  schema_name: "guardian_tokens",
+  # store all token types if not set
+  token_types: ["refresh"],
+  # default: 60 minutes
+  sweep_interval: 60
+
 # Configures the mailer
 #
 # By default it uses the "Local" adapter which stores the emails
