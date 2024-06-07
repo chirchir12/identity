@@ -25,7 +25,15 @@ config :identity, IdentityWeb.Endpoint,
 # setup guardian
 config :identity, Identity.Guardian,
   issuer: "identity",
-  secret_key: System.get_env("AUTH_SECRET")
+  secret_key: System.get_env("AUTH_SECRET"),
+  tokens: [
+    access: [
+      ttl: {15, :minutes}
+    ],
+    refresh: [
+      ttl: {1, :day}
+    ]
+  ]
 
 # Configures the mailer
 #

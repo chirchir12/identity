@@ -19,8 +19,15 @@ defmodule Identity.Auth do
   end
 
   def renew_access(refresh_token) do
-    {:ok, _old_stuff, {new_access_token, _new_claims}} = Guardian.exchange(refresh_token, "refresh", "access")
+    {:ok, _old_stuff, {new_access_token, _new_claims}} =
+      Guardian.exchange(refresh_token, "refresh", "access", ttl: get_ttl_opt(:access))
+
     {:ok, new_access_token}
+  end
+
+  def revoke_refresh_token(refresh_token) do
+    {:ok, _claim} = Guardian.revoke(refresh_token)
+    :ok
   end
 
   defp get_user_by_email(email) do
@@ -39,14 +46,14 @@ defmodule Identity.Auth do
 
   defp create_access_token(%User{} = user) do
     {:ok, access_token, _claim} =
-      Guardian.encode_and_sign(user, %{}, token_type: :access, ttl: {15, :minutes})
+      Guardian.encode_and_sign(user, %{grant_type: "password"}, token_type: :access, ttl: get_ttl_opt(:access))
 
     {:ok, access_token}
   end
 
   defp create_refresh_token(%User{} = user) do
     {:ok, refresh_token, _claim} =
-      Guardian.encode_and_sign(user, %{}, token_type: :refresh, ttl: {1, :day})
+      Guardian.encode_and_sign(user, %{}, token_type: :refresh, ttl: get_ttl_opt(:refresh))
 
     {:ok, refresh_token}
   end
@@ -56,5 +63,21 @@ defmodule Identity.Auth do
          {:ok, refresh_token} <- create_refresh_token(user) do
       {:ok, access_token, refresh_token}
     end
+  end
+
+  defp get_ttl_opt(:access) do
+      :identity
+      |> Application.get_env(Identity.Guardian)
+      |> Keyword.get(:tokens)
+      |> Keyword.get(:access)
+      |> Keyword.get(:ttl)
+  end
+
+  defp get_ttl_opt(:refresh) do
+    :identity
+      |> Application.get_env(Identity.Guardian)
+      |> Keyword.get(:tokens)
+      |> Keyword.get(:refresh)
+      |> Keyword.get(:ttl)
   end
 end
