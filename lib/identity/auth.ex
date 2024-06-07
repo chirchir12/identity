@@ -18,6 +18,11 @@ defmodule Identity.Auth do
     end
   end
 
+  def renew_access(refresh_token) do
+    {:ok, _old_stuff, {new_access_token, _new_claims}} = Guardian.exchange(refresh_token, "refresh", "access")
+    {:ok, new_access_token}
+  end
+
   defp get_user_by_email(email) do
     user = Users.get_user_by!(email, :email)
     {:ok, user}
