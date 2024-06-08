@@ -5,6 +5,9 @@ defmodule IdentityWeb.UserController do
   alias Identity.Users.User
   import Identity.GuardianHelpers
 
+  plug IdentityWeb.CheckRolesPlug, ["individual.customer"]
+  plug IdentityWeb.CheckGrantTypePlug, ["password"]
+
   action_fallback IdentityWeb.FallbackController
 
   def update(conn, %{"user" => user_params}) do

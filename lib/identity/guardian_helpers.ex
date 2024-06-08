@@ -7,4 +7,11 @@ defmodule Identity.GuardianHelpers do
       false -> {:error, :unauthorized}
     end
   end
+
+  def get_current_claim(%Plug.Conn{} = conn) do
+    case Guardian.Plug.authenticated?(conn) do
+      true -> {:ok, Guardian.Plug.current_claims(conn)}
+      false -> {:error, :unauthorized}
+    end
+  end
 end
