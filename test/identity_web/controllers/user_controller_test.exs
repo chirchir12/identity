@@ -33,7 +33,10 @@ defmodule IdentityWeb.UserControllerTest do
              } = json_response(conn, 200)["data"]
     end
 
-    test "renders ensure user does not change oid", %{conn: conn, user: %User{oid: oid, email: email}} do
+    test "renders ensure user does not change oid", %{
+      conn: conn,
+      user: %User{oid: oid, email: email}
+    } do
       new_oid = Ecto.UUID.generate()
       attrs = Map.put(@update_attrs, "oid", new_oid)
       conn = put(conn, ~p"/api/users/update", user: attrs)
@@ -56,17 +59,17 @@ defmodule IdentityWeb.UserControllerTest do
 
   describe "get profile" do
     setup [:create_user, :login]
+
     test "renders user if they are loggedin", %{conn: conn, user: %User{oid: oid, email: email}} do
       conn = get(conn, ~p"/api/users/profile")
+
       assert %{
-        "id" => ^oid,
-        "email" => ^email,
-        "firstname" => "firstname",
-        "lastname" => "lastname"
-      } = json_response(conn, 200)["data"]
-
+               "id" => ^oid,
+               "email" => ^email,
+               "firstname" => "firstname",
+               "lastname" => "lastname"
+             } = json_response(conn, 200)["data"]
     end
-
   end
 
   defp create_user(_) do

@@ -12,7 +12,7 @@ defmodule IdentityWeb.UserController do
 
   def update(conn, %{"user" => user_params}) do
     with {:ok, user} <- get_current_user(conn),
-          attrs <- Map.put(user_params, "oid", user.oid),
+         attrs <- Map.put(user_params, "oid", user.oid),
          {:ok, %User{} = user} <- Users.update_user(user, attrs) do
       conn
       |> put_status(:ok)
