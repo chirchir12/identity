@@ -25,8 +25,6 @@ defmodule Identity.Guardian do
   end
 
   def on_verify(claims, token, _options) do
-    IO.inspect(claims)
-
     with {:ok, _} <- Guardian.DB.on_verify(claims, token) do
       {:ok, claims}
     end
