@@ -3,98 +3,80 @@ defmodule IdentityWeb.UserControllerTest do
 
   import Identity.UsersFixtures
 
+  alias Identity.Auth
+
   alias Identity.Users.User
 
-  @create_attrs %{
-    password_hash: "some password_hash",
-    email: "some email",
-    oid: "some oid",
-    firstname: "some firstname",
-    lastname: "some lastname"
-  }
   @update_attrs %{
-    password_hash: "some updated password_hash",
-    email: "some updated email",
-    oid: "some updated oid",
-    firstname: "some updated firstname",
-    lastname: "some updated lastname"
+    firstname: "updated",
+    lastname: "updated"
   }
-  @invalid_attrs %{password_hash: nil, email: nil, oid: nil, firstname: nil, lastname: nil}
+  @invalid_attrs %{password: nil, email: nil, firstname: nil, lastname: nil}
 
   setup %{conn: conn} do
     {:ok, conn: put_req_header(conn, "accept", "application/json")}
   end
 
-  describe "index" do
-    test "lists all users", %{conn: conn} do
-      conn = get(conn, ~p"/api/users")
-      assert json_response(conn, 200)["data"] == []
-    end
-  end
+  describe "update user" do
+    setup [:create_user, :login]
 
-  describe "create user" do
-    test "renders user when data is valid", %{conn: conn} do
-      conn = post(conn, ~p"/api/users", user: @create_attrs)
-      assert %{"id" => id} = json_response(conn, 201)["data"]
-
-      conn = get(conn, ~p"/api/users/#{id}")
+    test "renders user when data is valid", %{conn: conn, user: %User{oid: oid, email: email}} do
+      conn = put(conn, ~p"/api/users/update", user: @update_attrs)
+      assert %{"id" => ^oid} = json_response(conn, 200)["data"]
+      conn = get(conn, ~p"/api/users/profile")
 
       assert %{
-               "id" => ^id,
-               "email" => "some email",
-               "firstname" => "some firstname",
-               "lastname" => "some lastname",
-               "oid" => "some oid",
-               "password_hash" => "some password_hash"
+               "id" => ^oid,
+               "email" => ^email,
+               "firstname" => "updated",
+               "lastname" => "updated"
+             } = json_response(conn, 200)["data"]
+    end
+
+    test "renders ensure user does not change oid", %{conn: conn, user: %User{oid: oid, email: email}} do
+      new_oid = Ecto.UUID.generate()
+      attrs = Map.put(@update_attrs, "oid", new_oid)
+      conn = put(conn, ~p"/api/users/update", user: attrs)
+      assert %{"id" => ^oid} = json_response(conn, 200)["data"]
+      conn = get(conn, ~p"/api/users/profile")
+
+      assert %{
+               "id" => ^oid,
+               "email" => ^email,
+               "firstname" => "updated",
+               "lastname" => "updated"
              } = json_response(conn, 200)["data"]
     end
 
     test "renders errors when data is invalid", %{conn: conn} do
-      conn = post(conn, ~p"/api/users", user: @invalid_attrs)
+      conn = put(conn, ~p"/api/users/update", user: @invalid_attrs)
       assert json_response(conn, 422)["errors"] != %{}
     end
   end
 
-  describe "update user" do
-    setup [:create_user]
-
-    test "renders user when data is valid", %{conn: conn, user: %User{id: id} = user} do
-      conn = put(conn, ~p"/api/users/#{user}", user: @update_attrs)
-      assert %{"id" => ^id} = json_response(conn, 200)["data"]
-
-      conn = get(conn, ~p"/api/users/#{id}")
-
+  describe "get profile" do
+    setup [:create_user, :login]
+    test "renders user if they are loggedin", %{conn: conn, user: %User{oid: oid, email: email}} do
+      conn = get(conn, ~p"/api/users/profile")
       assert %{
-               "id" => ^id,
-               "email" => "some updated email",
-               "firstname" => "some updated firstname",
-               "lastname" => "some updated lastname",
-               "oid" => "some updated oid",
-               "password_hash" => "some updated password_hash"
-             } = json_response(conn, 200)["data"]
+        "id" => ^oid,
+        "email" => ^email,
+        "firstname" => "firstname",
+        "lastname" => "lastname"
+      } = json_response(conn, 200)["data"]
+
     end
 
-    test "renders errors when data is invalid", %{conn: conn, user: user} do
-      conn = put(conn, ~p"/api/users/#{user}", user: @invalid_attrs)
-      assert json_response(conn, 422)["errors"] != %{}
-    end
-  end
-
-  describe "delete user" do
-    setup [:create_user]
-
-    test "deletes chosen user", %{conn: conn, user: user} do
-      conn = delete(conn, ~p"/api/users/#{user}")
-      assert response(conn, 204)
-
-      assert_error_sent 404, fn ->
-        get(conn, ~p"/api/users/#{user}")
-      end
-    end
   end
 
   defp create_user(_) do
     user = user_fixture()
     %{user: user}
+  end
+
+  defp login(%{user: user, conn: conn}) do
+    {:ok, _user, access_token, _refresh} = Auth.login(user.email, user.password)
+    conn = put_req_header(conn, "authorization", "Bearer #{access_token}")
+    %{conn: conn}
   end
 end

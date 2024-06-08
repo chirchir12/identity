@@ -5,27 +5,16 @@ defmodule Identity.UsersFixtures do
   """
 
   @doc """
-  Generate a unique user email.
-  """
-  def unique_user_email, do: "some email#{System.unique_integer([:positive])}"
-
-  @doc """
-  Generate a unique user oid.
-  """
-  def unique_user_oid, do: "some oid#{System.unique_integer([:positive])}"
-
-  @doc """
   Generate a user.
   """
   def user_fixture(attrs \\ %{}) do
     {:ok, user} =
       attrs
       |> Enum.into(%{
-        email: unique_user_email(),
-        firstname: "some firstname",
-        lastname: "some lastname",
-        oid: unique_user_oid(),
-        password_hash: "some password_hash"
+        email: "test@email.com",
+        firstname: "firstname",
+        lastname: "lastname",
+        password: "password"
       })
       |> Identity.Users.create_user()
 

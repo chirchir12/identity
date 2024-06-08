@@ -19,13 +19,24 @@ defmodule Identity.Users.User do
   def changeset(user, attrs) do
     user
     |> cast(attrs, [:email, :oid, :firstname, :lastname, :password])
-    |> validate_required([:email, :firstname, :lastname, :password])
+    |> validate_required([:email, :firstname, :lastname])
+    |> maybe_validate_password()
     |> validate_format(:email, @mail_regex, message: "invalid email")
     |> unique_constraint(:oid)
     |> unique_constraint(:email)
     |> put_password_hash()
-    |> put_oid()
+    |> maybe_put_oid()
     |> put_downcased_email()
+  end
+
+  defp maybe_validate_password(changeset) do
+    if changeset.data.id do
+      changeset
+    else
+      changeset
+      |> validate_required([:password])
+      |> validate_length(:password, min: 6)
+    end
   end
 
   defp put_password_hash(%Ecto.Changeset{valid?: true, changes: %{password: pass}} = changeset) do
@@ -40,12 +51,16 @@ defmodule Identity.Users.User do
 
   defp put_downcased_email(changeset), do: changeset
 
-  defp put_oid(%Ecto.Changeset{valid?: true} = changeset) do
-    case get_field(changeset, :oid) do
-      nil -> changeset |> put_change(:oid, Ecto.UUID.generate())
-      _ -> changeset
+  defp maybe_put_oid(%Ecto.Changeset{valid?: true} = changeset) do
+    if changeset.data.id do
+      changeset
+    else
+      case get_field(changeset, :oid) do
+        nil -> changeset |> put_change(:oid, Ecto.UUID.generate())
+        _ -> changeset
+      end
     end
   end
 
-  defp put_oid(changeset), do: changeset
+  defp maybe_put_oid(changeset), do: changeset
 end

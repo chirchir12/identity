@@ -2,39 +2,49 @@ defmodule Identity.UsersTest do
   use Identity.DataCase
 
   alias Identity.Users
+  alias Identity.Users.User
 
   describe "users" do
     alias Identity.Users.User
 
     import Identity.UsersFixtures
 
-    @invalid_attrs %{password_hash: nil, email: nil, oid: nil, firstname: nil, lastname: nil}
+    @invalid_attrs %{password: nil, email: nil, oid: nil, firstname: nil, lastname: nil}
 
     test "list_users/0 returns all users" do
-      user = user_fixture()
+      user = user_fixture() |> nullify_password()
       assert Users.list_users() == [user]
     end
 
     test "get_user!/1 returns the user with given id" do
-      user = user_fixture()
+      user = user_fixture() |> nullify_password()
       assert Users.get_user!(user.id) == user
+    end
+
+    test "get_user_by!/2 returns the user with when email is passed" do
+      user = user_fixture() |> nullify_password()
+      assert Users.get_user_by!(user.email, :email) == user
+    end
+
+    test "get_user_by!/2 returns the user with when uuid is passed" do
+      user = user_fixture() |> nullify_password()
+      assert Users.get_user_by!(user.oid, :uuid) == user
     end
 
     test "create_user/1 with valid data creates a user" do
       valid_attrs = %{
-        password_hash: "some password_hash",
-        email: "some email",
-        oid: "some oid",
-        firstname: "some firstname",
-        lastname: "some lastname"
+        password: "password",
+        email: "test@email.com",
+        firstname: "firstname",
+        lastname: "lastname"
       }
 
       assert {:ok, %User{} = user} = Users.create_user(valid_attrs)
-      assert user.password_hash == "some password_hash"
-      assert user.email == "some email"
-      assert user.oid == "some oid"
-      assert user.firstname == "some firstname"
-      assert user.lastname == "some lastname"
+      assert Argon2.verify_pass("password", user.password_hash) == true
+      assert user.email == "test@email.com"
+      assert user.oid != nil
+      assert user.firstname == "firstname"
+      assert user.lastname == "lastname"
     end
 
     test "create_user/1 with invalid data returns error changeset" do
@@ -42,26 +52,23 @@ defmodule Identity.UsersTest do
     end
 
     test "update_user/2 with valid data updates the user" do
-      user = user_fixture()
+      current_user = user_fixture() |> nullify_password()
 
       update_attrs = %{
-        password_hash: "some updated password_hash",
-        email: "some updated email",
-        oid: "some updated oid",
-        firstname: "some updated firstname",
-        lastname: "some updated lastname"
+        firstname: "new_firstname",
+        lastname: "new_lastname"
       }
 
-      assert {:ok, %User{} = user} = Users.update_user(user, update_attrs)
-      assert user.password_hash == "some updated password_hash"
-      assert user.email == "some updated email"
-      assert user.oid == "some updated oid"
-      assert user.firstname == "some updated firstname"
-      assert user.lastname == "some updated lastname"
+      assert {:ok, %User{} = user} = Users.update_user(current_user, update_attrs)
+      assert user.password_hash == current_user.password_hash
+      assert user.email == current_user.email
+      assert user.oid == current_user.oid
+      assert user.firstname == "new_firstname"
+      assert user.lastname == "new_lastname"
     end
 
     test "update_user/2 with invalid data returns error changeset" do
-      user = user_fixture()
+      user = user_fixture() |> nullify_password()
       assert {:error, %Ecto.Changeset{}} = Users.update_user(user, @invalid_attrs)
       assert user == Users.get_user!(user.id)
     end
@@ -71,10 +78,10 @@ defmodule Identity.UsersTest do
       assert {:ok, %User{}} = Users.delete_user(user)
       assert_raise Ecto.NoResultsError, fn -> Users.get_user!(user.id) end
     end
+  end
 
-    test "change_user/1 returns a user changeset" do
-      user = user_fixture()
-      assert %Ecto.Changeset{} = Users.change_user(user)
-    end
+  defp nullify_password(%User{} = user) do
+    user = %{user | password: nil}
+    user
   end
 end

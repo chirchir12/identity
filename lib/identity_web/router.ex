@@ -27,6 +27,7 @@ defmodule IdentityWeb.Router do
     pipe_through [:api, :maybe_auth, :ensure_auth]
 
     get "/users/profile", UserController, :profile
+    put "/users/update", UserController, :update
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
