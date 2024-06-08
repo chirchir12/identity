@@ -46,7 +46,7 @@ defmodule Identity.Auth do
 
   defp create_access_token(%User{} = user) do
     {:ok, access_token, _claim} =
-      Guardian.encode_and_sign(user, %{grant_type: "password"},
+      Guardian.encode_and_sign(user, %{grant_type: "password", role: "individual.customer"},
         token_type: :access,
         ttl: get_ttl_opt(:access)
       )

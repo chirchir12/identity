@@ -22,7 +22,7 @@ config :identity, IdentityWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4000],
   check_origin: false,
   code_reloader: true,
-  debug_errors: true,
+  debug_errors: false,
   secret_key_base: "/wjcYILrgNAxN6lt5GgLLUzVSrewMdvp6aa8Yt4wmSAJC9DNC1L1LJ4ksh/m3VDr",
   watchers: []
 
