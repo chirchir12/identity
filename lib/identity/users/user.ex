@@ -38,6 +38,8 @@ defmodule Identity.Users.User do
     changeset |> put_change(:email, email |> String.downcase())
   end
 
+  defp put_downcased_email(changeset), do: changeset
+
   defp put_oid(%Ecto.Changeset{valid?: true} = changeset) do
     case get_field(changeset, :oid) do
       nil -> changeset |> put_change(:oid, Ecto.UUID.generate())

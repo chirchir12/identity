@@ -5,8 +5,28 @@ defmodule IdentityWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :maybe_auth do
+    plug IdentityWeb.Pipelines.MaybeAuthPipeline
+  end
+
+  pipeline :ensure_auth do
+    plug IdentityWeb.Pipelines.EnsureAuthPipeline
+  end
+
+  scope("/api/auth", IdentityWeb) do
+    pipe_through [:api, :maybe_auth]
+
+    post "/login", AuthController, :login
+    post "/register", AuthController, :register
+
+    post "/token/renew", AuthController, :refresh_token
+    post "/token/revoke", AuthController, :revoke_refresh_token
+  end
+
   scope "/api", IdentityWeb do
-    pipe_through :api
+    pipe_through [:api, :maybe_auth, :ensure_auth]
+
+    get "/users/profile", UserController, :profile
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development

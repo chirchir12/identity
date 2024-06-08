@@ -1,11 +1,14 @@
 defmodule Identity.Auth do
   alias Identity.Users
   alias Identity.Users.User
+  alias Identity.Auth.Login
   alias Identity.Guardian
 
   def login(email, plain_text_password) do
-    with {:ok, user} <- get_user_by_email(email),
-         {:ok, true} <- verify_password(plain_text_password, user.password_hash),
+    with {:ok, %Ecto.Changeset{changes: %{email: email, password: pass}}} <-
+           validate_login(email, plain_text_password),
+         {:ok, user} <- get_user_by_email(email),
+         {:ok, true} <- verify_password(pass, user.password_hash),
          {:ok, access_token, refresh_token} <- auth_reply(user) do
       {:ok, user, access_token, refresh_token}
     end
@@ -19,10 +22,10 @@ defmodule Identity.Auth do
   end
 
   def renew_access(refresh_token) do
-    {:ok, _old_stuff, {new_access_token, _new_claims}} =
-      Guardian.exchange(refresh_token, "refresh", "access", ttl: get_ttl_opt(:access))
-
-    {:ok, new_access_token}
+    with {:ok, _old_stuff, {new_access_token, _new_claims}} <-
+           Guardian.exchange(refresh_token, "refresh", "access", ttl: get_ttl_opt(:access)) do
+      {:ok, new_access_token}
+    end
   end
 
   def revoke_refresh_token(refresh_token) do
@@ -82,5 +85,14 @@ defmodule Identity.Auth do
     |> Keyword.get(:tokens)
     |> Keyword.get(:refresh)
     |> Keyword.get(:ttl)
+  end
+
+  defp validate_login(email, password) do
+    changeset = Login.changeset(%Login{}, %{email: email, password: password})
+
+    case changeset.valid? do
+      true -> {:ok, changeset}
+      false -> {:error, changeset}
+    end
   end
 end
